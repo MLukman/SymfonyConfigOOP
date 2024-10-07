@@ -13,18 +13,16 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class ObjectConfig extends BaseConfig
 {
-
-    static public function createTreeBuilder(string $name, string $rootClass): TreeBuilder
+    public function createTreeBuilder(string $name, string $rootClass): TreeBuilder
     {
         $treeBuilder = new TreeBuilder($name);
-        $rootNode = $treeBuilder->getRootNode();
-        self::populate($rootNode, $rootClass);
+        $this->populate($treeBuilder->getRootNode(), $rootClass);
         return $treeBuilder;
     }
 
-    static public function populate(NodeDefinition $rootNode, string $rootClass)
+    public function populate(NodeDefinition $rootNode, string $rootClass)
     {
-        $appender = static::getAppender($rootNode);
+        $appender = $this->childAppender($rootNode);
         $reflection = new ReflectionClass($rootClass);
         foreach ($reflection->getProperties() as $property) {
             /* @var $property ReflectionProperty */
@@ -33,25 +31,25 @@ class ObjectConfig extends BaseConfig
                 if (is_subclass_of($attribute->getName(), BaseConfig::class)) {
                     /* @var $childAttribute BaseConfig */
                     $childAttribute = $attribute->newInstance();
-                    $childNodeDefinition = call_user_func(
-                            [$attribute->getName(), 'createNodeDefinition'],
-                            $property->getName(),
-                            $childAttribute->prototypeClass ?? $property->getType()->getName());
-                    $childAttribute->apply($childNodeDefinition, $property);
-                    $appender->append($childNodeDefinition);
+                    $childNode = $childAttribute->createNode(
+                        $property->getName(),
+                        $childAttribute->prototypeClass ?? $property->getType()->getName()
+                    );
+                    $childAttribute->apply($childNode, $property);
+                    $appender->append($childNode);
                 }
             }
         }
     }
 
-    static protected function getAppender(NodeDefinition $node)
+    protected function childAppender(NodeDefinition $rootNode): NodeDefinition
     {
-        return $node;
+        return $rootNode;
     }
 
     #[Override]
-    static protected function createNodeDefinition(string $name, string $rootClass): NodeDefinition
+    protected function createNode(string $name, string $rootClass): NodeDefinition
     {
-        return static::createTreeBuilder($name, $rootClass)->getRootNode();
+        return $this->createTreeBuilder($name, $rootClass)->getRootNode();
     }
 }

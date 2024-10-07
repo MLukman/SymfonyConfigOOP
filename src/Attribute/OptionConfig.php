@@ -11,7 +11,6 @@ use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class OptionConfig extends BaseConfig
 {
-
     #[\Override]
     public function __construct(public array $options, ?string $info = null, mixed $defaultValue = null, bool $isRequired = false, mixed $example = null, array $extras = [])
     {
@@ -19,7 +18,7 @@ class OptionConfig extends BaseConfig
     }
 
     #[Override]
-    static protected function createNodeDefinition(string $name, string $rootClass): NodeDefinition
+    protected function createNode(string $name, string $rootClass): NodeDefinition
     {
         return new EnumNodeDefinition($name);
     }
