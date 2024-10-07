@@ -13,7 +13,6 @@ use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
 class ConfigDenormalizer implements DenormalizerInterface
 {
-
     #[Override]
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
     {
@@ -41,15 +40,25 @@ class ConfigDenormalizer implements DenormalizerInterface
                         break;
 
                     case ObjectArrayConfig::class:
-                        $parray = [];
                         $pattr = $attribute->newInstance();
-                        foreach ($data[$pname] as $pk => $pv) {
-                            $parray[$pk] = $this->denormalize($pv, $pattr->prototypeClass, $format, $context);
-                            // special logic to inject the key into property _id if it exists
-                            if (property_exists($parray[$pk], '_id')) {
-                                (new \ReflectionClass($parray[$pk]))->getProperty('_id')->setValue($parray[$pk], $pk);
+                        // this recursive function parses multi-dimensional array
+                        $parseTree = function ($tree, $dim) use (&$parseTree, $pattr, $format, $context) {
+                            $dim--;
+                            $treeOut = [];
+                            foreach ($tree as $pk => $pv) {
+                                if ($dim == 0) {
+                                    $treeOut[$pk] = $this->denormalize($pv, $pattr->prototypeClass, $format, $context);
+                                    // special logic to inject the key into property _id if it exists
+                                    if (property_exists($treeOut[$pk], '_id')) {
+                                        (new \ReflectionClass($treeOut[$pk]))->getProperty('_id')->setValue($treeOut[$pk], $pk);
+                                    }
+                                } else {
+                                    $treeOut[$pk] = $parseTree($pv, $dim);
+                                }
                             }
-                        }
+                            return $treeOut;
+                        };
+                        $parray = $parseTree($data[$pname], $pattr->dimension);
                         $property->setValue($out, $parray);
                         break;
 
@@ -70,8 +79,12 @@ class ConfigDenormalizer implements DenormalizerInterface
     }
 
     #[Override]
-    public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
-    {
+    public function supportsDenormalization(
+        mixed $data,
+        string $type,
+        ?string $format = null,
+        array $context = []
+    ): bool {
         if (is_array($data)) {
             return true;
         }

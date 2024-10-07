@@ -8,15 +8,14 @@ use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 
 abstract class BaseConfig
 {
-
     public function __construct(
-            public ?string $info = null,
-            public mixed $defaultValue = null,
-            public bool $isRequired = false,
-            public string|array|null $example = null,
-            public array $extras = [])
-    {
-        
+        public ?string $info = null,
+        public mixed $defaultValue = null,
+        public bool $isRequired = false,
+        public string|array|null $example = null,
+        public array $extras = []
+    ) {
+
     }
 
     protected function apply(NodeDefinition $node, ReflectionProperty $property): NodeDefinition
@@ -44,7 +43,7 @@ abstract class BaseConfig
                 case ConfigExtra::DefaultNull:
                     $node->defaultNull();
                     break;
-                case ConfigExtra::CannotBeEmpty;
+                case ConfigExtra::CannotBeEmpty:
                     $node->cannotBeEmpty();
                     break;
             }
@@ -53,5 +52,5 @@ abstract class BaseConfig
         return $node;
     }
 
-    abstract static protected function createNodeDefinition(string $name, string $rootClass): NodeDefinition;
+    abstract protected function createNode(string $name, string $rootClass): NodeDefinition;
 }

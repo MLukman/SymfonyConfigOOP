@@ -10,9 +10,8 @@ use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class FloatConfig extends BaseConfig
 {
-
     #[Override]
-    static protected function createNodeDefinition(string $name, string $rootClass): NodeDefinition
+    protected function createNode(string $name, string $rootClass): NodeDefinition
     {
         return new FloatNodeDefinition($name);
     }
