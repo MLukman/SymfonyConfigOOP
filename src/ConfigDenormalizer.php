@@ -5,11 +5,14 @@ namespace MLukman\SymfonyConfigOOP;
 use MLukman\SymfonyConfigOOP\Attribute\BaseConfig;
 use MLukman\SymfonyConfigOOP\Attribute\ObjectArrayConfig;
 use MLukman\SymfonyConfigOOP\Attribute\ObjectConfig;
+use MLukman\SymfonyConfigOOP\Attribute\OptionConfig;
 use Override;
 use ReflectionAttribute;
 use ReflectionClass;
+use ReflectionEnum;
 use ReflectionProperty;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use function enum_exists;
 
 class ConfigDenormalizer implements DenormalizerInterface
 {
@@ -60,6 +63,17 @@ class ConfigDenormalizer implements DenormalizerInterface
                         };
                         $parray = $parseTree($data[$pname], $pattr->dimension);
                         $property->setValue($out, $parray);
+                        break;
+
+                    case OptionConfig::class:
+                        if (enum_exists($ptype)) {
+                            $refl = new ReflectionEnum($ptype);
+                            if ($refl->isBacked()) {
+                                $property->setValue($out, $ptype::from($data[$pname]));
+                            } else {
+                                $property->setValue($out, $refl->getCase($data[$pname])->getValue());
+                            }
+                        }
                         break;
 
                     default:

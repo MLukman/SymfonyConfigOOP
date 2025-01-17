@@ -10,12 +10,24 @@ use ReflectionClass;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
+use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Serializer;
 
 class ConfigUtil
 {
     public static Serializer $serializer;
+
+    public static function parseConfigurationValues(array $configurationValues, string $name, string $rootClass, int $dimension = 0): object|array
+    {
+        $configurations = (new Processor())->processConfiguration(
+            self::createConfiguration($name, $rootClass, $dimension),
+            $configurationValues
+        );
+        return $dimension >= 1 ?
+            self::deserializeArray($configurations, $rootClass) :
+            self::deserializeObject($configurations, $rootClass);
+    }
 
     /**
      * Create ConfigurationInterface that is needed by
@@ -28,7 +40,7 @@ class ConfigUtil
      */
     public static function createConfiguration(string $name, string $rootClass, int $dimension = 0): ConfigurationInterface
     {
-        return new class ($name, $rootClass, $dimension) implements ConfigurationInterface {
+        return new class($name, $rootClass, $dimension) implements ConfigurationInterface {
             public function __construct(private string $name, private string $rootClass, private int $dimension)
             {
                 if (!class_exists($this->rootClass)) {
@@ -67,7 +79,7 @@ class ConfigUtil
      * @return mixedProcess the input $configurations array and output as an object of the class
      * defined by $rootClass
      */
-    public static function process(array $configurations, string $rootClass): mixed
+    public static function deserializeObject(array $configurations, string $rootClass): object
     {
         if (!isset(self::$serializer)) {
             self::$serializer = new Serializer(
@@ -82,15 +94,21 @@ class ConfigUtil
      * Process the input $configurations array and output as an array of items of the class
      * defined by $arrayItemClass while preserving the original array keys
      */
-    public static function processArray(array $configurations, string $arrayItemClass): array
+    public static function deserializeArray(array $configurations, string $arrayItemClass, int $dimension = 1): array
     {
-        $processed = [];
-        foreach ($configurations as $key => $configuration) {
-            $processed[$key] = self::process($configuration, $arrayItemClass);
-            if (property_exists($processed[$key], '_id')) {
-                (new ReflectionClass($processed[$key]))->getProperty('_id')->setValue($processed[$key], $key);
+        $deserialized = [];
+        if ($dimension > 1) {
+            foreach ($configurations as $key => $configuration) {
+                $deserialized[$key] = self::deserializeArray($configuration, $arrayItemClass, $dimension - 1);
+            }
+        } else {
+            foreach ($configurations as $key => $configuration) {
+                $deserialized[$key] = self::deserializeObject($configuration, $arrayItemClass);
+                if (property_exists($deserialized[$key], '_id')) {
+                    (new ReflectionClass($deserialized[$key]))->getProperty('_id')->setValue($deserialized[$key], $key);
+                }
             }
         }
-        return $processed;
+        return $deserialized;
     }
 }

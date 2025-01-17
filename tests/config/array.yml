@@ -1,0 +1,13 @@
+one:
+  one_one:
+    string: Element 1
+    child:
+      backedenum: case1
+  one_two:
+    string: Element 2
+    child:
+      enum: TWO
+  one_three:
+    string: Element 3
+    child:
+      backedenum: case3

@@ -1,0 +1,24 @@
+string: A string
+int: 12
+float: 3.142
+bool: true
+array:
+  - one
+  - two
+  - three
+child:
+  backedenum: case3
+children:
+  case1:
+    backedenum: case1
+  case2:
+    enum: TWO
+  case3:
+    backedenum: case3
+grandChildren:
+  10:
+    11:
+      enum: ONE
+  20:
+    21:
+      backedenum: case2
