@@ -16,7 +16,7 @@ class ConfigUtilTest extends TestCaseBase
     {
         $configs = self::loadConfigFile(__DIR__ . '/config/single.yml');
         $combinedConfigs = self::$processor->processConfiguration(ConfigUtil::createConfiguration('single', RootConfig::class), $configs);
-        $actual = ConfigUtil::deserializeObject($combinedConfigs, RootConfig::class);
+        $actual = ConfigUtil::deserializeObject($combinedConfigs, RootConfig::class, ['single']);
         //print_r($actual);
         $this->assertInstanceOf(RootConfig::class, $actual);
         $this->assertEquals($combinedConfigs['string'], $actual->string);
@@ -29,19 +29,21 @@ class ConfigUtilTest extends TestCaseBase
         $this->assertEquals(SimpleEnum::TWO, $actual->children['case2']->enum);
         $this->assertEquals(BackedEnum::THREE, $actual->children['case3']->backedenum);
         $this->assertEquals(BackedEnum::TWO, $actual->grandChildren['20']['21']->backedenum);
+        $this->assertEquals('single:grandChildren:10:11', $actual->grandChildren['10']['11']->path);
     }
 
     public function testProcessArray(): void
     {
         $configs = self::loadConfigFile(__DIR__ . '/config/array.yml');
         $configMeta = self::$processor->processConfiguration(ConfigUtil::createConfiguration('array', RootConfig::class, 2), $configs);
-        $actual = ConfigUtil::deserializeArray($configMeta, RootConfig::class, 2);
+        $actual = ConfigUtil::deserializeArray($configMeta, RootConfig::class, 2, ['array']);
         //print_r($actual);
         $this->assertIsArray($actual);
         $this->assertArrayHasKey('one', $actual);
         $this->assertInstanceOf(RootConfig::class, $actual['one']['one_three']);
         $this->assertEquals($configMeta['one']['one_three']['string'], $actual['one']['one_three']->string);
         $this->assertEquals(BackedEnum::THREE, $actual['one']['one_three']->child->backedenum);
+        $this->assertEquals('array:one:one_three:child', $actual['one']['one_three']->child->path);
     }
 
     public function testExceptionInvalidEnum(): void

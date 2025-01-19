@@ -2,15 +2,13 @@
 
 namespace MLukman\SymfonyConfigOOP;
 
-use Exception;
 use MLukman\SymfonyConfigOOP\Attribute\ObjectArrayConfig;
 use MLukman\SymfonyConfigOOP\Attribute\ObjectConfig;
 use Override;
-use ReflectionClass;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
-use Symfony\Component\Config\Definition\Processor;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Serializer;
 
@@ -20,13 +18,10 @@ class ConfigUtil
 
     public static function parseConfigurationValues(array $configurationValues, string $name, string $rootClass, int $dimension = 0): object|array
     {
-        $configurations = (new Processor())->processConfiguration(
-            self::createConfiguration($name, $rootClass, $dimension),
-            $configurationValues
-        );
+        $configurations = self::createConfiguration($name, $rootClass, $dimension)->getConfigTreeBuilder()->buildTree()->finalize($configurationValues);
         return $dimension >= 1 ?
-            self::deserializeArray($configurations, $rootClass) :
-            self::deserializeObject($configurations, $rootClass);
+            self::deserializeArray($configurations, $rootClass, $dimension, [$name]) :
+            self::deserializeObject($configurations, $rootClass, [$name]);
     }
 
     /**
@@ -44,7 +39,7 @@ class ConfigUtil
             public function __construct(private string $name, private string $rootClass, private int $dimension)
             {
                 if (!class_exists($this->rootClass)) {
-                    throw new Exception("{$this->rootClass} class does not exist");
+                    throw new InvalidConfigurationException("ConfigUtil::createConfiguration() failed because {$this->rootClass} class does not exist");
                 }
             }
 
@@ -79,7 +74,7 @@ class ConfigUtil
      * @return mixedProcess the input $configurations array and output as an object of the class
      * defined by $rootClass
      */
-    public static function deserializeObject(array $configurations, string $rootClass): object
+    public static function deserializeObject(array $configurations, string $rootClass, array $path = []): object
     {
         if (!isset(self::$serializer)) {
             self::$serializer = new Serializer(
@@ -87,26 +82,23 @@ class ConfigUtil
                 ['json' => new JsonEncoder()]
             );
         }
-        return self::$serializer->deserialize(\json_encode($configurations), $rootClass, 'json');
+        return self::$serializer->deserialize(\json_encode($configurations), $rootClass, 'json', ['path' => $path]);
     }
 
     /**
      * Process the input $configurations array and output as an array of items of the class
      * defined by $arrayItemClass while preserving the original array keys
      */
-    public static function deserializeArray(array $configurations, string $arrayItemClass, int $dimension = 1): array
+    public static function deserializeArray(array $configurations, string $arrayItemClass, int $dimension = 1, array $path = []): array
     {
         $deserialized = [];
         if ($dimension > 1) {
             foreach ($configurations as $key => $configuration) {
-                $deserialized[$key] = self::deserializeArray($configuration, $arrayItemClass, $dimension - 1);
+                $deserialized[$key] = self::deserializeArray($configuration, $arrayItemClass, $dimension - 1, array_merge($path, [$key]));
             }
         } else {
             foreach ($configurations as $key => $configuration) {
-                $deserialized[$key] = self::deserializeObject($configuration, $arrayItemClass);
-                if (property_exists($deserialized[$key], '_id')) {
-                    (new ReflectionClass($deserialized[$key]))->getProperty('_id')->setValue($deserialized[$key], $key);
-                }
+                $deserialized[$key] = self::deserializeObject($configuration, $arrayItemClass, array_merge($path, [$key]));
             }
         }
         return $deserialized;

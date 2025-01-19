@@ -3,6 +3,7 @@
 namespace MLukman\SymfonyConfigOOP\Attribute;
 
 use Attribute;
+use MLukman\SymfonyConfigOOP\ConfigDenormalizer;
 use Override;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 
@@ -30,5 +31,26 @@ class ObjectArrayConfig extends ObjectConfig
             $p = $p->arrayPrototype();
         }
         return $p;
+    }
+
+    #[Override]
+    public function denormalize(ConfigDenormalizer $denormalizer, mixed $data, string $ptype, ?string $format, array $context): mixed
+    {
+        // this recursive function parses multi-dimensional array
+        $pattr = $this;
+        $parseTree = function ($tree, $dim, $context) use (&$parseTree, $pattr, $format, $denormalizer) {
+            $dim--;
+            $treeOut = [];
+            foreach ($tree as $pk => $pv) {
+                $ncontext = ['path' => array_merge($context['path'], [$pk])] + $context;
+                if ($dim == 0) {
+                    $treeOut[$pk] = $denormalizer->denormalize($pv, $pattr->prototypeClass, $format, $ncontext);
+                } else {
+                    $treeOut[$pk] = $parseTree($pv, $dim, $ncontext);
+                }
+            }
+            return $treeOut;
+        };
+        return $parseTree($data, $pattr->dimension, $context);
     }
 }

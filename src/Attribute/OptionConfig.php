@@ -4,6 +4,7 @@ namespace MLukman\SymfonyConfigOOP\Attribute;
 
 use Attribute;
 use Exception;
+use MLukman\SymfonyConfigOOP\ConfigDenormalizer;
 use Override;
 use ReflectionEnum;
 use ReflectionEnumBackedCase;
@@ -15,7 +16,7 @@ use function enum_exists;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class OptionConfig extends BaseConfig
 {
-    #[\Override]
+    #[Override]
     public function __construct(public array $options = [], ?string $info = null, mixed $defaultValue = null, bool $isRequired = false, mixed $example = null, array $extras = [])
     {
         parent::__construct($info, $defaultValue, $isRequired, $example, $extras);
@@ -27,7 +28,7 @@ class OptionConfig extends BaseConfig
         return new EnumNodeDefinition($name);
     }
 
-    #[\Override]
+    #[Override]
     protected function apply(NodeDefinition $node, ReflectionProperty $property): NodeDefinition
     {
         if (empty($this->options)) {
@@ -44,5 +45,20 @@ class OptionConfig extends BaseConfig
         }
         $node->values($this->options);
         return parent::apply($node, $property);
+    }
+
+    #[Override]
+    public function denormalize(ConfigDenormalizer $denormalizer, mixed $data, string $ptype, ?string $format, array $context): mixed
+    {
+        if (enum_exists($ptype)) {
+            $refl = new ReflectionEnum($ptype);
+            if ($refl->isBacked()) {
+                return $ptype::from($data);
+            } else {
+                return $refl->getCase($data)->getValue();
+            }
+        } else {
+            return $data;
+        }
     }
 }

@@ -2,11 +2,13 @@
 
 namespace MLukman\SymfonyConfigOOP\Attribute;
 
+use MLukman\SymfonyConfigOOP\ConfigDenormalizer;
 use MLukman\SymfonyConfigOOP\Enum\ConfigExtra;
+use Override;
 use ReflectionProperty;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 
-abstract class BaseConfig
+abstract class BaseConfig implements ConfigAttribute
 {
     public function __construct(
         public ?string $info = null,
@@ -15,7 +17,7 @@ abstract class BaseConfig
         public string|array|null $example = null,
         public array $extras = []
     ) {
-
+        
     }
 
     protected function apply(NodeDefinition $node, ReflectionProperty $property): NodeDefinition
@@ -50,6 +52,18 @@ abstract class BaseConfig
         }
 
         return $node;
+    }
+
+    #[Override]
+    public function canDenormalize(mixed $data, array $context): bool
+    {
+        return true;
+    }
+
+    #[Override]
+    public function denormalize(ConfigDenormalizer $denormalizer, mixed $data, string $ptype, ?string $format, array $context): mixed
+    {
+        return $data;
     }
 
     abstract protected function createNode(string $name, string $rootClass): NodeDefinition;

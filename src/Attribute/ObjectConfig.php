@@ -3,6 +3,7 @@
 namespace MLukman\SymfonyConfigOOP\Attribute;
 
 use Attribute;
+use MLukman\SymfonyConfigOOP\ConfigDenormalizer;
 use Override;
 use ReflectionAttribute;
 use ReflectionClass;
@@ -51,5 +52,20 @@ class ObjectConfig extends BaseConfig
     protected function createNode(string $name, string $rootClass): NodeDefinition
     {
         return $this->createTreeBuilder($name, $rootClass)->getRootNode();
+    }
+
+    #[Override]
+    public function canDenormalize(mixed $data, array $context): bool
+    {
+        return is_array($data);
+    }
+
+    #[Override]
+    public function denormalize(ConfigDenormalizer $denormalizer, mixed $data, string $ptype, ?string $format, array $context): mixed
+    {
+        if (!is_array($data)) {
+            return null;
+        }
+        return $denormalizer->denormalize($data, $ptype, $format, $context);
     }
 }
