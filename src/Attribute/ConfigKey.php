@@ -17,8 +17,10 @@ class ConfigKey implements ConfigAttribute
     }
 
     #[Override]
-    public function denormalize(ConfigDenormalizer $denormalizer, mixed $data, string $ptype, ?string $format, array $context): mixed
-    {
+    public function denormalize(
+        ConfigDenormalizer $denormalizer, mixed $data, string $ptype,
+        ?string $format, array $context
+    ): mixed {
         $last = array_pop($context['path']);
         if ($ptype == 'string') {
             return end($context['path']);

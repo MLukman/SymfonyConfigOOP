@@ -61,8 +61,10 @@ class ObjectConfig extends BaseConfig
     }
 
     #[Override]
-    public function denormalize(ConfigDenormalizer $denormalizer, mixed $data, string $ptype, ?string $format, array $context): mixed
-    {
+    public function denormalize(
+        ConfigDenormalizer $denormalizer, mixed $data, string $ptype,
+        ?string $format, array $context
+    ): mixed {
         if (!is_array($data)) {
             return null;
         }

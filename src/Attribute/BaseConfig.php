@@ -11,11 +11,9 @@ use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 abstract class BaseConfig implements ConfigAttribute
 {
     public function __construct(
-        public ?string $info = null,
-        public mixed $defaultValue = null,
+        public ?string $info = null, public mixed $defaultValue = null,
         public bool $isRequired = false,
-        public string|array|null $example = null,
-        public array $extras = []
+        public string|array|null $example = null, public array $extras = []
     ) {
         
     }
@@ -61,8 +59,10 @@ abstract class BaseConfig implements ConfigAttribute
     }
 
     #[Override]
-    public function denormalize(ConfigDenormalizer $denormalizer, mixed $data, string $ptype, ?string $format, array $context): mixed
-    {
+    public function denormalize(
+        ConfigDenormalizer $denormalizer, mixed $data, string $ptype,
+        ?string $format, array $context
+    ): mixed {
         return $data;
     }
 

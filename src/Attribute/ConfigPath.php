@@ -21,8 +21,10 @@ class ConfigPath implements ConfigAttribute
     }
 
     #[Override]
-    public function denormalize(ConfigDenormalizer $denormalizer, mixed $data, string $ptype, ?string $format, array $context): mixed
-    {
+    public function denormalize(
+        ConfigDenormalizer $denormalizer, mixed $data, string $ptype,
+        ?string $format, array $context
+    ): mixed {
         array_pop($context['path']);
         switch ($ptype) {
             case 'array':

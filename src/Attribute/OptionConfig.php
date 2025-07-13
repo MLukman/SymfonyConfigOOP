@@ -17,8 +17,11 @@ use function enum_exists;
 class OptionConfig extends BaseConfig
 {
     #[Override]
-    public function __construct(public array $options = [], ?string $info = null, mixed $defaultValue = null, bool $isRequired = false, mixed $example = null, array $extras = [])
-    {
+    public function __construct(
+        public array $options = [], ?string $info = null,
+        mixed $defaultValue = null, bool $isRequired = false,
+        mixed $example = null, array $extras = []
+    ) {
         parent::__construct($info, $defaultValue, $isRequired, $example, $extras);
     }
 
@@ -48,8 +51,10 @@ class OptionConfig extends BaseConfig
     }
 
     #[Override]
-    public function denormalize(ConfigDenormalizer $denormalizer, mixed $data, string $ptype, ?string $format, array $context): mixed
-    {
+    public function denormalize(
+        ConfigDenormalizer $denormalizer, mixed $data, string $ptype,
+        ?string $format, array $context
+    ): mixed {
         if (enum_exists($ptype)) {
             $refl = new ReflectionEnum($ptype);
             if ($refl->isBacked()) {
