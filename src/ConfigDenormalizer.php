@@ -6,6 +6,7 @@ use MLukman\SymfonyConfigOOP\Attribute\BaseConfig;
 use MLukman\SymfonyConfigOOP\Attribute\ConfigAttribute;
 use Override;
 use ReflectionClass;
+use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
 class ConfigDenormalizer implements DenormalizerInterface
@@ -19,16 +20,19 @@ class ConfigDenormalizer implements DenormalizerInterface
     }
 
     #[Override]
-    public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
-    {
+    public function supportsDenormalization(
+        mixed $data, string $type, ?string $format = null, array $context = []
+    ): bool {
         return is_array($data) && !empty($context['path'] ?? null);
     }
 
     #[Override]
-    public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): mixed
-    {
+    public function denormalize(
+        mixed $data, string $type, ?string $format = null, array $context = []
+    ): mixed {
         $refl = new ReflectionClass($type);
         $out = $refl->newInstance();
+        $accessor = PropertyAccess::createPropertyAccessor();
         foreach ($refl->getProperties() as $property) {
             $pname = $property->getName();
             $ptype = $property->getType()->getName();
@@ -41,7 +45,12 @@ class ConfigDenormalizer implements DenormalizerInterface
                     ($pattr instanceof BaseConfig && !isset($data[$pname]))) {
                     continue;
                 }
-                $property->setValue($out, $pattr->denormalize($this, $pdata, $ptype, $format, $ncontext));
+                $pvalue = $pattr->denormalize($this, $pdata, $ptype, $format, $ncontext);
+                if ($accessor->isWritable($out, $pname)) {
+                    $accessor->setValue($out, $pname, $pvalue);
+                } else {
+                    $property->setValue($out, $pvalue);
+                }
             }
         }
         return $out;
