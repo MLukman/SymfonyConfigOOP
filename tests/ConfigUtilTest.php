@@ -8,6 +8,7 @@ use MLukman\SymfonyConfigOOP\Tests\App\Config\ChildConfig;
 use MLukman\SymfonyConfigOOP\Tests\App\Config\RootConfig;
 use MLukman\SymfonyConfigOOP\Tests\App\Config\SimpleEnum;
 use MLukman\SymfonyConfigOOP\Tests\App\TestCaseBase;
+use ReflectionProperty;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class ConfigUtilTest extends TestCaseBase
@@ -30,6 +31,11 @@ class ConfigUtilTest extends TestCaseBase
         $this->assertEquals(BackedEnum::THREE, $actual->children['case3']->backedenum);
         $this->assertEquals(BackedEnum::TWO, $actual->grandChildren['20']['21']->backedenum);
         $this->assertEquals('single:grandChildren:10:11', $actual->grandChildren['10']['11']->path);
+        $this->assertSame($actual, $actual->child->parent->child->parent);
+        $this->assertSame($actual, $actual->children['case2']->parent);
+        $this->assertSame($actual, $actual->grandChildren['20']['21']->parent);
+        $this->assertNull($actual->child->invalidParent);
+        $this->assertFalse((new ReflectionProperty($actual->child, 'invalidParentNotNull'))->isInitialized($actual->child));
     }
 
     public function testProcessArray(): void
@@ -44,6 +50,15 @@ class ConfigUtilTest extends TestCaseBase
         $this->assertEquals($configMeta['one']['one_three']['string'], $actual['one']['one_three']->string);
         $this->assertEquals(BackedEnum::THREE, $actual['one']['one_three']->child->backedenum);
         $this->assertEquals('array:one:one_three:child', $actual['one']['one_three']->child->path);
+    }
+
+    public function testChildNoParent(): void
+    {
+        $configs = self::loadConfigFile(__DIR__ . '/config/child_no_parent.yml');
+        $combinedConfigs = self::$processor->processConfiguration(ConfigUtil::createConfiguration('child_no_parent', ChildConfig::class), $configs);
+        $actual = ConfigUtil::deserializeObject($combinedConfigs, ChildConfig::class, ['child']);
+        $this->assertInstanceOf(ChildConfig::class, $actual);
+        $this->assertFalse((new ReflectionProperty($actual, 'parent'))->isInitialized($actual));
     }
 
     public function testExceptionInvalidEnum(): void

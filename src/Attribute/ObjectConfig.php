@@ -8,8 +8,10 @@ use Override;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionProperty;
+use ReflectionUnionType;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class ObjectConfig extends BaseConfig
@@ -32,6 +34,9 @@ class ObjectConfig extends BaseConfig
                 if (is_subclass_of($attribute->getName(), BaseConfig::class)) {
                     /* @var $childAttribute BaseConfig */
                     $childAttribute = $attribute->newInstance();
+                    if (!isset($property->prototypeClass) && $property->getType() instanceof ReflectionUnionType) {
+                        throw new InvalidConfigurationException(printf('The property "%s" of class "%s" that has been attributed as ObjectConfig should have single type only, otherwise please specify the propertyClass parameter', $property->getName(), $rootClass));
+                    }
                     $childNode = $childAttribute->createNode(
                         $property->getName(),
                         $childAttribute->prototypeClass ?? $property->getType()->getName()

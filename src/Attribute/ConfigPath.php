@@ -6,10 +6,14 @@ use Attribute;
 use MLukman\SymfonyConfigOOP\ConfigDenormalizer;
 use Override;
 
+/**
+ * Attributed property will be populated with the configuration path.
+ * Examples: property1.property11.arrayKey1.0.property3
+ */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class ConfigPath implements ConfigAttribute
 {
-    public function __construct(public string $separator = '.')
+    public function __construct(public string $separator = '.', public int $maxTrace = 9999)
     {
         
     }
@@ -26,11 +30,12 @@ class ConfigPath implements ConfigAttribute
         ?string $format, array $context
     ): mixed {
         array_pop($context['path']);
+        $paths = array_slice($context['path'], -min(count($context['path']), $this->maxTrace));
         switch ($ptype) {
             case 'array':
-                return $context['path'];
+                return $paths;
             case 'string':
-                return implode($this->separator, $context['path']);
+                return implode($this->separator, $paths);
         }
     }
 }

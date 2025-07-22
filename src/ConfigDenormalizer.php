@@ -6,6 +6,7 @@ use MLukman\SymfonyConfigOOP\Attribute\BaseConfig;
 use MLukman\SymfonyConfigOOP\Attribute\ConfigAttribute;
 use Override;
 use ReflectionClass;
+use ReflectionProperty;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
@@ -32,10 +33,12 @@ class ConfigDenormalizer implements DenormalizerInterface
     ): mixed {
         $refl = new ReflectionClass($type);
         $out = $refl->newInstance();
+        $context['parents'][] = $out;
         $accessor = PropertyAccess::createPropertyAccessor();
         foreach ($refl->getProperties() as $property) {
+            /** @var ReflectionProperty $property */
             $pname = $property->getName();
-            $ptype = $property->getType()->getName();
+            $ptype = $property->getType()->__toString();
             $pdata = $data[$pname] ?? null;
             $ncontext = ['path' => array_merge($context['path'], [$pname])] + $context;
             foreach ($property->getAttributes() as $attribute) {
@@ -46,6 +49,9 @@ class ConfigDenormalizer implements DenormalizerInterface
                     continue;
                 }
                 $pvalue = $pattr->denormalize($this, $pdata, $ptype, $format, $ncontext);
+                if (is_null($pvalue) && !$property->getType()->allowsNull()) {
+                    continue;
+                }
                 if ($accessor->isWritable($out, $pname)) {
                     $accessor->setValue($out, $pname, $pvalue);
                 } else {

@@ -7,6 +7,10 @@ use MLukman\SymfonyConfigOOP\ConfigDenormalizer;
 use Override;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
+/**
+ * Attributed property will be populated with the configuration key.
+ * Examples: property1, 0
+ */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class ConfigKey implements ConfigAttribute
 {
