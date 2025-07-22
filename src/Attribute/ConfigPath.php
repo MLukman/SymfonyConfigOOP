@@ -6,6 +6,10 @@ use Attribute;
 use MLukman\SymfonyConfigOOP\ConfigDenormalizer;
 use Override;
 
+/**
+ * Attributed property will be populated with the configuration path.
+ * Examples: property1.property11.arrayKey1.0.property3
+ */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class ConfigPath implements ConfigAttribute
 {
