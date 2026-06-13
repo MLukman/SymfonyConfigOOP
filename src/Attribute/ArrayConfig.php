@@ -11,7 +11,6 @@ use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class ArrayConfig extends BaseConfig
 {
-    #[Override]
     public function __construct(
         protected string $type = "scalar", ?string $info = null,
         mixed $defaultValue = null, bool $isRequired = false,

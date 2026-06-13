@@ -8,11 +8,13 @@ use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 
 abstract class NumericalConfig extends BaseConfig
 {
-    #[Override]
     public function __construct(
-        ?string $info = null, mixed $defaultValue = null,
-        bool $isRequired = false, public ?int $min = null,
-        public ?int $max = null, string|array|null $example = null,
+        ?string $info = null,
+        mixed $defaultValue = null,
+        bool $isRequired = false,
+        public ?int $min = null,
+        public ?int $max = null,
+        string|array|null $example = null,
         array $extras = []
     ) {
         parent::__construct($info, $defaultValue, $isRequired, $example, $extras);

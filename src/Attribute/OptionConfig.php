@@ -16,11 +16,13 @@ use function enum_exists;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class OptionConfig extends BaseConfig
 {
-    #[Override]
     public function __construct(
-        public array $options = [], ?string $info = null,
-        mixed $defaultValue = null, bool $isRequired = false,
-        mixed $example = null, array $extras = []
+        public array $options = [],
+        ?string $info = null,
+        mixed $defaultValue = null,
+        bool $isRequired = false,
+        mixed $example = null,
+        array $extras = []
     ) {
         parent::__construct($info, $defaultValue, $isRequired, $example, $extras);
     }
@@ -46,14 +48,18 @@ class OptionConfig extends BaseConfig
                 throw new Exception("The attribute OptionConfig for property {$property->getName()} of class {$property->getDeclaringClass()->name} requires list of options since this property is not an Enum");
             }
         }
+        /** @var EnumNodeDefinition $node */
         $node->values($this->options);
         return parent::apply($node, $property);
     }
 
     #[Override]
     public function denormalize(
-        ConfigDenormalizer $denormalizer, mixed $data, string $ptype,
-        ?string $format, array $context
+        ConfigDenormalizer $denormalizer,
+        mixed $data,
+        string $ptype,
+        ?string $format,
+        array $context
     ): mixed {
         if (enum_exists($ptype)) {
             $refl = new ReflectionEnum($ptype);

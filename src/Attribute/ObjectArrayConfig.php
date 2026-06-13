@@ -10,11 +10,13 @@ use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class ObjectArrayConfig extends ObjectConfig
 {
-    #[Override]
     public function __construct(
-        public string $prototypeClass, public int $dimension = 1,
-        ?string $info = null, mixed $defaultValue = null,
-        public bool $isRequired = false, string|array|null $example = null,
+        public string $prototypeClass,
+        public int $dimension = 1,
+        ?string $info = null,
+        mixed $defaultValue = null,
+        public bool $isRequired = false,
+        string|array|null $example = null,
         array $extras = []
     ) {
         parent::__construct($info, $defaultValue, $isRequired, $example, $extras);
@@ -32,13 +34,19 @@ class ObjectArrayConfig extends ObjectConfig
 
     #[Override]
     public function denormalize(
-        ConfigDenormalizer $denormalizer, mixed $data, string $ptype,
-        ?string $format, array $context
+        ConfigDenormalizer $denormalizer,
+        mixed $data,
+        string $ptype,
+        ?string $format,
+        array $context
     ): mixed {
         // this recursive function parses multi-dimensional array
         $pattr = $this;
         $parseTree = function ($tree, $dim, $context) use (
-            &$parseTree, $pattr, $format, $denormalizer
+            &$parseTree,
+            $pattr,
+            $format,
+            $denormalizer
         ) {
             $dim--;
             $treeOut = [];
